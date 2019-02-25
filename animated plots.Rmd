@@ -1,0 +1,82 @@
+---
+title: "Animated plots"
+author: "Limor Raviv"
+date: "12 April"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# How to make beautiful animated plots using gganimate and tweenr
+
+### This code is for creating plots that build up over time (i.e., the x-axis)
+
+```{r load packages, echo=TRUE, warning=FALSE}
+library(ggplot2)
+library(gganimate)
+library(animation)
+library(tweenr)
+```
+
+### First, load your data.
+
+You data should include at least 4 coloumns:
+
+1. A variable of interest  (e.g., accuracy scores), which will be the y-axis 
+
+2. A variable representing time (e.g., trial number), which will be the x-axis 
+
+3. A varaible representing individual data points (e.g., participant number) 
+
+4. A variable representing condition to which individuals are assigned (e.g., male vs. female) 
+
+```{r load data, include=TRUE}
+
+data <- read.csv("animated_plot_data.csv") 
+
+head(data,30) # show the first 30 rows of the data frame
+```
+
+Then, use the tweenr package to make a smooth transition between each time point.
+
+The "tween_elements functions will create two additional coloums to your data frame: ".frame" (corresponding to the origina trial number) and ".group" (corresponding to the original participant number).
+
+```{r smooth, include=TRUE}
+
+data$ease <- "linear" #add a coloumn to the data frame
+
+data2<- tween_elements(data, 'Trial.Number', 'Participant', 'ease', nframes = 100) # create 100 frames between each trial number
+
+head(data2,30) # show the first 30 rows of the data frame
+```
+
+Now, we'll create our wanted plot using ggplot.
+
+
+```{r plot, warning=FALSE}
+plot<- ggplot(data=data2, aes(x = Trial.Number, y = Accuracy, group=.group, color=Condition, frame=.frame, cumulative=TRUE))+
+  geom_line(lwd=1, alpha=0.8)+  #change line trasparency with alpha = x
+  scale_x_continuous("Trial Number", breaks=c(1:17))+
+  scale_y_continuous("Accuracy")+
+  theme_classic()+
+  theme(text = element_text(size = 25), axis.text.x = element_text(size=20), legend.position=c(.8,.2))
+
+```
+
+And finally, let's animate the plot and save it!
+
+
+```{r animate, include=TRUE, fig.show="animate""}
+
+# change the speed of the animation by chanding interval = x
+
+gganimate(plot, interval = 0.05)
+
+# remove the title by frame by adding title_frame = FALSE
+gganimate(plot, title_frame = FALSE,filename="animated_plot.gif",ani.height=500, ani.width=700, interval = 0.05) # save as gif
+
+
+```
+
